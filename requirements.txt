@@ -1,0 +1,8 @@
+pandas>=2.0
+numpy
+scikit-learn>=1.3
+pyyaml
+# optional (only for LLM classification of unseen trees; the tool runs without them)
+anthropic
+# optional local embeddings fallback (downloads a model on first use)
+# sentence-transformers

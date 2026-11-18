@@ -1,0 +1,37 @@
+# Company B: metal packaging manufacturer, 8 ERPs, 25 currencies, vendor IDs only.
+company: B
+mode: single
+reporting_currency: USD
+data_dir: data
+fx_file: fx_rates_usd.csv
+
+file: invoice_lines.csv
+id_col: line_id
+amount_col: line_amount
+amount_basis: net
+currency_col: currency
+rate_col: currency_rate
+rate_semantics: units_per_reporting     # units of line currency per 1 USD
+date_cols: [invoice_date, posting_date]
+min_year: 2015
+max_year: 2026
+supplier_id_col: vendor_id
+item_code_col: material_number
+description_cols: [line_description]
+text_cols: [line_description, gl_account_description]
+context_cols: [gl_account, gl_account_description, vendor_id, po_type, supplier_type, document_type, transport_flag, region]
+rule_cols: [line_description, gl_account_description]
+exclusion_context_cols: [gl_account, gl_account_description, supplier_type, document_type]
+duplicates: {full_row: true}   # rows identical in every column except line_id -> DUPLICATE (see DECISIONS.md)
+item:
+  use_item_code: true
+  cluster_threshold: 0.93
+exclusions:
+  use_default: true
+  learn_from: {file: seed_labels.csv, id_col: line_id, include_col: include}
+  min_prob: 0.6
+classify:
+  method: auto
+  taxonomy: taxonomy_B.csv
+  training_labels: {file: seed_labels.csv, id_col: line_id, include_col: include, level_cols: [category_l1, category_l2, category_l3]}
+  add_supplier_to_text: false

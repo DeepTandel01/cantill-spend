@@ -1,0 +1,12 @@
+data/
+data_link
+*.csv
+!configs/*.csv
+!submission/*.csv
+!outputs/*__A.csv
+!outputs/*__B.csv
+outputs/.cache/
+__pycache__/
+.venv/
+.env
+*.pdf

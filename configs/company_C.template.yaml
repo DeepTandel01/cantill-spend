@@ -1,0 +1,34 @@
+# Template for an unseen company. Copy to configs/company_C.yaml and fix column names (or use scripts/suggest_config.py).
+company: C
+mode: single
+reporting_currency: USD
+data_dir: data
+# fx_file: fx_rates.csv          # columns: currency, month (YYYY-MM), units_per_usd
+
+file: c_invoice_lines.csv
+id_col: line_id
+amount_col: amount
+amount_basis: net                # gross -> add: vat_col: vat_rate, default_vat: 0.0
+currency_col: currency           # remove if all lines are already USD
+# rate_col: fx_rate
+rate_semantics: units_per_reporting   # line currency units per 1 USD
+date_cols: [invoice_date, posting_date]
+supplier_name_col: supplier_name
+# supplier_id_col: vendor_id
+# item_code_col: item_code
+description_cols: [description]
+text_cols: [description, category_hint]       # text shown to the classifier
+context_cols: []                              # extra tokens for supervised mode only (gl account, plant, ...)
+rule_cols: [description]                      # text scanned for tax / intercompany / royalty / ... keywords
+# status_col: status
+# ok_status: [approved, paid]
+duplicates: {full_row: true}
+supplier: {cluster_threshold: 0.9}
+item: {use_item_code: true, cluster_threshold: 0.9}
+exclusions:
+  use_default: true
+  # extra: [{code: NON_PROCUREMENT, pattern: "STAFF REIMBURSEMENT"}]
+classify:
+  method: auto
+  taxonomy: c_taxonomy.csv       # columns like category_l1..category_l4 (or l1..l4); any depth up to 4
+  add_supplier_to_text: true

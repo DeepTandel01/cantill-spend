@@ -1,0 +1,75 @@
+# Company A: mining operations of a chemicals group. Two systems: SAP goods receipts (net) + AP tool (gross).
+company: A
+mode: two_system
+reporting_currency: ZAR
+data_dir: data
+
+primary:                       # ERP goods receipts
+  file: erp_goods_receipts.csv
+  id_col: line_id
+  id_prefix: "ERP:"
+  amount_col: value_zar
+  amount_basis: net
+  currency: ZAR
+  po_col: po_number
+  supplier_name_col: supplier_name
+  supplier_id_col: vendor_id
+  item_code_col: material_number
+  description_cols: [material_short_text, service_short_text]
+  item_text_cols: [service_short_text, material_short_text]   # identity of the item: first non-empty
+  text_cols: [material_short_text, service_short_text]
+  context_cols: [spend_type, material_type]
+  rule_cols: [material_short_text, service_short_text, supplier_name]
+  item_group_col: spend_type
+  date_col: posting_date
+  qty_col: quantity
+
+secondary:                     # accounts-payable tool export
+  file: invoice_tool_export.csv
+  id_col: tool_record_id
+  id_prefix: "TOOL:"
+  amount_col: gross_amount
+  amount_basis: gross
+  vat_col: vat_rate
+  default_vat: 0.15            # brief: blank VAT rate -> 15%
+  currency: ZAR
+  po_col: po_reference
+  invoice_col: invoice_number
+  supplier_name_col: supplier_name_as_captured
+  description_cols: [line_text]
+  text_cols: [line_text]
+  rule_cols: [line_text, supplier_name_as_captured]
+  date_col: invoice_date
+  dayfirst: true
+  status_col: status
+  ok_status: [approved, paid]
+  cancelled_status: [cancelled]
+  qty_col: quantity
+
+match:
+  po_regex: '(\d{10})'         # PO numbers are 10 digits; tool formats: 'PO#451..', '451../10.0', 'PO 451..'
+  amount_tol: 0.02
+  text_sim_min: 0.5
+
+supplier:
+  cluster_threshold: 0.9
+  unmapped_bucket: true        # see DECISIONS.md #3 (client golden lumps vendor-less names into one bucket)
+  min_vendor_coverage: 0.5
+
+item:
+  master_when: {column: spend_type, values: [Material]}   # stocked materials keep their material number
+  unmapped_when: {column: spend_type, values: [Free Text, Catalogue]}  # no stable item identity -> one bucket
+  cluster_threshold: 0.8
+  adopt_threshold: 0.85
+  strip_patterns:
+    - ["^(REPR|REPAIR) ", ""]
+    - ["^WARRANTY \\d+ ", ""]
+
+exclusions:
+  use_default: true
+
+classify:
+  method: auto                 # supervised if labels exist, else llm (if ANTHROPIC_API_KEY), else lexical
+  taxonomy: taxonomy_A.csv
+  training_labels: {file: labels_A.csv, id_col: record_id, level_cols: [category_l1, category_l2, category_l3]}
+  add_supplier_to_text: true
